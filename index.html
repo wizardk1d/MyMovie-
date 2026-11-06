@@ -1,0 +1,651 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>MyMovie</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            margin: 30px;
+            color: #26364A;
+        }
+
+        h1, h2 {
+            color: #26364A;
+        }
+
+        nav {
+            margin-bottom: 25px;
+            border-bottom: 2px solid #26364A;
+            padding-bottom: 12px;
+        }
+
+        input, button, select {
+            padding: 10px;
+            margin: 5px;
+            border-radius: 5px;
+        }
+
+        input, select {
+            border: 1px solid #ccc;
+        }
+
+        button {
+            background-color: #26364A;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #405875;
+        }
+
+        button:disabled {
+            background-color: #888;
+            cursor: not-allowed;
+        }
+
+        #movieResults,
+        #watchlistResults,
+        #recommendationResults {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .movie {
+            background-color: white;
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            overflow-wrap: anywhere;
+        }
+
+        .movie img {
+            width: 100%;
+            border-radius: 5px;
+        }
+
+        .movie p {
+            line-height: 1.5;
+        }
+
+        .removeButton {
+            background-color: #b83232;
+        }
+
+        .removeButton:hover {
+            background-color: #8f2424;
+        }
+
+        .stats {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+
+        .statCard {
+            background-color: white;
+            padding: 18px;
+            border-radius: 8px;
+            min-width: 160px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .statCard h3 {
+            margin-bottom: 5px;
+        }
+
+        .statCard p {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+
+        .message {
+            font-weight: bold;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .activePage {
+            display: block;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                margin: 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>MyMovie</h1>
+    <p>Your Personal Movie Planner</p>
+
+    <nav>
+        <button id="searchPageButton">Movie Search</button>
+        <button id="watchlistPageButton">My Watchlist</button>
+        <button id="recommendationPageButton">Recommendations</button>
+    </nav>
+
+    <section id="searchPage" class="page activePage">
+
+        <h2>Movie Search</h2>
+
+        <p>Search for your favourite movies.</p>
+
+        <input
+            type="text"
+            id="searchInput"
+            placeholder="Enter movie title"
+        >
+
+        <button id="searchButton">Search Movie</button>
+
+        <p id="message" class="message"></p>
+
+        <div id="movieResults"></div>
+
+    </section>
+
+    <section id="watchlistPage" class="page">
+
+        <h2>My Watchlist</h2>
+
+        <p>Manage your saved movies here.</p>
+
+        <div class="stats">
+
+            <div class="statCard">
+                <h3>Saved Movies</h3>
+                <p id="totalMovies">0</p>
+            </div>
+
+            <div class="statCard">
+                <h3>Average Rating</h3>
+                <p id="averageRating">0.00/10</p>
+            </div>
+
+        </div>
+
+        <p id="watchlistMessage"></p>
+
+        <div id="watchlistResults"></div>
+
+    </section>
+
+    <section id="recommendationPage" class="page">
+
+        <h2>Movie Recommendations</h2>
+
+        <p>Find movies based on your preferred genre.</p>
+
+        <input
+            type="text"
+            id="recommendationInput"
+            placeholder="Enter a movie keyword"
+        >
+
+        <select id="genreSelect">
+
+            <option value="all">All Genres</option>
+            <option value="28">Action</option>
+            <option value="12">Adventure</option>
+            <option value="16">Animation</option>
+            <option value="35">Comedy</option>
+            <option value="80">Crime</option>
+            <option value="18">Drama</option>
+            <option value="14">Fantasy</option>
+            <option value="27">Horror</option>
+            <option value="9648">Mystery</option>
+            <option value="10749">Romance</option>
+            <option value="878">Science Fiction</option>
+            <option value="53">Thriller</option>
+
+        </select>
+
+        <button id="recommendButton">Find Recommendations</button>
+
+        <p id="recommendationMessage" class="message"></p>
+
+        <div id="recommendationResults"></div>
+
+    </section>
+
+
+    <script>
+        const searchInput = document.getElementById("searchInput");
+        const searchButton = document.getElementById("searchButton");
+        const movieResults = document.getElementById("movieResults");
+        const message = document.getElementById("message");
+
+        const searchPage = document.getElementById("searchPage");
+        const watchlistPage = document.getElementById("watchlistPage");
+        const recommendationPage = document.getElementById("recommendationPage");
+
+        const searchPageButton = document.getElementById("searchPageButton");
+        const watchlistPageButton = document.getElementById("watchlistPageButton");
+        const recommendationPageButton =
+            document.getElementById("recommendationPageButton");
+
+        const watchlistResults = document.getElementById("watchlistResults");
+        const totalMovies = document.getElementById("totalMovies");
+        const averageRating = document.getElementById("averageRating");
+
+        const recommendationInput =
+            document.getElementById("recommendationInput");
+
+        const genreSelect = document.getElementById("genreSelect");
+        const recommendButton = document.getElementById("recommendButton");
+
+        const recommendationResults =
+            document.getElementById("recommendationResults");
+
+        const recommendationMessage =
+            document.getElementById("recommendationMessage");
+
+
+        function getWatchlist() {
+            return JSON.parse(localStorage.getItem("watchlist")) || [];
+
+        }
+
+
+        function saveWatchlist(watchlist) {
+            localStorage.setItem("watchlist", JSON.stringify(watchlist));
+
+        }
+
+        function showPage(page) {
+            searchPage.classList.remove("activePage");
+            watchlistPage.classList.remove("activePage");
+            recommendationPage.classList.remove("activePage");
+            page.classList.add("activePage");
+
+        }
+
+
+        searchPageButton.addEventListener("click", function() {
+            showPage(searchPage);
+        });
+
+
+        watchlistPageButton.addEventListener("click", function() {
+            showPage(watchlistPage);
+            renderWatchlist();
+        });
+
+
+        recommendationPageButton.addEventListener("click", function() {
+            showPage(recommendationPage);
+        });
+
+        function addToWatchlist(movie, button) {
+            const watchlist = getWatchlist();
+            const alreadyAdded = watchlist.some(function(item) {
+                return item.id === movie.id;
+
+            });
+
+            if (alreadyAdded) {
+                return;
+            }
+
+            const movieData = {
+                id: movie.id,
+                title: movie.title,
+                release_date: movie.release_date,
+                vote_average: movie.vote_average,
+                overview: movie.overview,
+                poster_path: movie.poster_path,
+                status: "Planned"
+            };
+
+            watchlist.push(movieData);
+
+            saveWatchlist(watchlist);
+
+            button.textContent = "Already Added";
+            button.disabled = true;
+            message.textContent = "Movie added to your watchlist!";
+
+        }
+
+        function createMovieCard(movie) {
+            const movieCard = document.createElement("div");
+            movieCard.className = "movie";
+
+            const title = document.createElement("h3");
+            title.textContent = movie.title;
+
+            const releaseDate = document.createElement("p");
+            releaseDate.textContent =
+                "Release Date: " + (movie.release_date || "Unknown");
+
+            const rating = document.createElement("p");
+            rating.textContent =
+                "Rating: " + Number(movie.vote_average || 0).toFixed(1) + "/10";
+
+            const description = document.createElement("p");
+            description.textContent =
+                movie.overview || "No description available.";
+
+            movieCard.appendChild(title);
+            if (movie.poster_path) {
+                const poster = document.createElement("img");
+
+                poster.src =
+                    "https://image.tmdb.org/t/p/w500" + movie.poster_path;
+                poster.alt = movie.title + " poster";
+                movieCard.appendChild(poster);
+
+            } else {
+                const noPoster = document.createElement("p");
+                noPoster.textContent = "Poster unavailable.";
+                movieCard.appendChild(noPoster);
+
+            }
+
+            movieCard.appendChild(releaseDate);
+            movieCard.appendChild(rating);
+            movieCard.appendChild(description);
+
+            const watchlist = getWatchlist();
+
+            const alreadyAdded = watchlist.some(function(item) {
+                return item.id === movie.id;
+            });
+
+            const watchlistButton = document.createElement("button");
+
+            watchlistButton.textContent = alreadyAdded
+                ? "Already Added"
+                : "+ Add to Watchlist";
+
+            watchlistButton.disabled = alreadyAdded;
+
+            watchlistButton.addEventListener("click", function() {
+                addToWatchlist(movie, watchlistButton);
+            });
+
+            movieCard.appendChild(watchlistButton);
+            return movieCard;
+        }
+
+        searchButton.addEventListener("click", async function() {
+            const movieName = searchInput.value.trim();
+
+            if (movieName === "") {
+                message.textContent = "Please enter a movie title.";
+                return;
+            }
+
+            message.textContent = "Searching...";
+            movieResults.innerHTML = "";
+            searchButton.disabled = true;
+
+            try {
+                const result =
+                    await window.movieAPI.searchMovies(movieName);
+
+                if (!result.success) {
+                    throw new Error(result.message);
+                }
+
+                const movies = result.movies;
+                if (movies.length === 0) {
+                    message.textContent = "No movies found.";
+                    return;
+                }
+
+                message.textContent =
+                    "Search results: " + movies.length;
+
+                movies.forEach(function(movie) {
+                    const movieCard = createMovieCard(movie);
+                    movieResults.appendChild(movieCard);
+                });
+
+            } catch (error) {
+                message.textContent = "Error: " + error.message;
+            } finally {
+
+                searchButton.disabled = false;
+            }
+        });
+
+        searchInput.addEventListener("keydown", function(event) {
+            if (event.key === "Enter") {
+                searchButton.click();
+            }
+        });
+
+        function calculateAverageRating() {
+            const watchlist = getWatchlist();
+
+            if (watchlist.length === 0) {
+                return 0;
+            }
+
+            let totalRating = 0;
+            watchlist.forEach(function(movie) {
+                totalRating += Number(movie.vote_average) || 0;
+            });
+            return totalRating / watchlist.length;
+        }
+
+        function renderWatchlist() {
+            const watchlist = getWatchlist();
+            watchlistResults.innerHTML = "";
+            totalMovies.textContent = watchlist.length;
+            averageRating.textContent =
+                calculateAverageRating().toFixed(2) + "/10";
+            if (watchlist.length === 0) {
+                watchlistResults.textContent =
+                    "Your watchlist is empty.";
+                return;
+            }
+
+            watchlist.forEach(function(movie) {
+                const movieCard = document.createElement("div");
+                movieCard.className = "movie";
+
+                const title = document.createElement("h3");
+                title.textContent = movie.title;
+
+                const releaseDate = document.createElement("p");
+                releaseDate.textContent =
+                    "Release Date: " + (movie.release_date || "Unknown");
+
+                const rating = document.createElement("p");
+                rating.textContent =
+                    "Rating: " + Number(movie.vote_average || 0).toFixed(1) + "/10";
+
+                const description = document.createElement("p");
+                description.textContent =
+                    movie.overview || "No description available.";
+
+                movieCard.appendChild(title);
+                if (movie.poster_path) {
+                    const poster = document.createElement("img");
+                    poster.src =
+                        "https://image.tmdb.org/t/p/w500" + movie.poster_path;
+                    poster.alt = movie.title + " poster";
+
+                    movieCard.appendChild(poster);
+
+                }
+
+                movieCard.appendChild(releaseDate);
+                movieCard.appendChild(rating);
+                movieCard.appendChild(description);
+
+                const statusLabel = document.createElement("label");
+                statusLabel.textContent = "Watch Status: ";
+
+                const statusSelect = document.createElement("select");
+
+                const statuses = ["Planned", "Watching", "Watched"];
+
+                statuses.forEach(function(status) {
+                    const option = document.createElement("option");
+                    option.value = status;
+                    option.textContent = status;
+
+                    if ((movie.status || "Planned") === status) {
+                        option.selected = true;
+                    }
+
+                    statusSelect.appendChild(option);
+                });
+
+                statusSelect.addEventListener("change", function() {
+                    const updatedWatchlist = getWatchlist().map(function(item) {
+                        if (item.id === movie.id) {
+                            item.status = statusSelect.value;
+                        }
+                        return item;
+                    });
+
+                    saveWatchlist(updatedWatchlist);
+                    watchlistMessage.textContent =
+                        movie.title + " status updated.";
+                });
+
+                movieCard.appendChild(statusLabel);
+                movieCard.appendChild(statusSelect);
+
+                const removeButton = document.createElement("button");
+
+                removeButton.textContent = "Remove";
+                removeButton.className = "removeButton";
+
+                removeButton.addEventListener("click", function() {
+                    const updatedWatchlist = getWatchlist().filter(
+                        function(item) {
+                            return item.id !== movie.id;
+                        }
+                    );
+
+                    saveWatchlist(updatedWatchlist);
+                    watchlistMessage.textContent = "Movie removed from your watchlist!";
+                    renderWatchlist();
+                });
+
+                movieCard.appendChild(removeButton);
+                watchlistResults.appendChild(movieCard);
+            });
+        }
+
+        recommendButton.addEventListener("click", async function() {
+            const keyword = recommendationInput.value.trim();
+
+            const selectedGenre = genreSelect.value;
+            if (keyword === "") {
+                recommendationMessage.textContent =
+                    "Please enter a movie keyword.";
+                return;
+            }
+
+            recommendationMessage.textContent =
+                "Finding recommendations...";
+            recommendationResults.innerHTML = "";
+            recommendButton.disabled = true;
+
+            try {
+                const result =
+                    await window.movieAPI.searchMovies(keyword);
+
+                if (!result.success) {
+                    throw new Error(result.message);
+
+                }
+
+                const movies = result.movies;
+
+                let genreId;
+                if (selectedGenre === "all") {
+                    genreId = "all";
+                } else if (selectedGenre === "28") {
+                    genreId = 28;
+                } else if (selectedGenre === "12") {
+                    genreId = 12;
+                } else if (selectedGenre === "16") {
+                    genreId = 16;
+                } else if (selectedGenre === "35") {
+                    genreId = 35;
+                } else if (selectedGenre === "80") {
+                    genreId = 80;
+                } else if (selectedGenre === "18") {
+                    genreId = 18;
+                } else if (selectedGenre === "14") {
+                    genreId = 14;
+                } else if (selectedGenre === "27") {
+                    genreId = 27;
+                } else if (selectedGenre === "9648") {
+                    genreId = 9648;
+                } else if (selectedGenre === "10749") {
+                    genreId = 10749;
+                } else if (selectedGenre === "878") {
+                    genreId = 878;
+                } else if (selectedGenre === "53") {
+                    genreId = 53;
+                } else {
+                    genreId = "all";
+                }
+
+
+                let recommendations = [];
+                if (genreId === "all") {
+                    recommendations = movies;
+                } else {
+                    recommendations = movies.filter(function(movie) {
+                        return movie.genre_ids &&
+                            movie.genre_ids.includes(genreId);
+                    });
+                }
+
+                if (recommendations.length === 0) {
+                    recommendationMessage.textContent =
+                        "No movies found for this keyword and genre. Try another keyword.";
+                    return;
+                }
+
+                recommendationMessage.textContent =
+                    "We found " + recommendations.length +
+                    " movie recommendation(s)!";
+                recommendations.forEach(function(movie) {
+                    const movieCard = createMovieCard(movie);
+                    recommendationResults.appendChild(movieCard);
+                });
+
+            } catch (error) {
+                recommendationMessage.textContent =
+                    "Error: " + error.message;
+            } finally {
+                recommendButton.disabled = false;
+            }
+        });
+
+        recommendationInput.addEventListener("keydown", function(event) {
+            if (event.key === "Enter") {
+                recommendButton.click();
+            }
+        });
+        renderWatchlist();
+    </script>
+</body>
+</html>
